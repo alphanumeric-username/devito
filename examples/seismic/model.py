@@ -6,7 +6,8 @@ except:
     pass
 
 from devito import (Grid, SubDomain, Function, Constant, warning,
-                    SubDimension, Eq, Inc, Operator, div, sin, Abs)
+                    SubDimension, Eq, Inc, Operator, div, sin, Abs,
+                    grad)
 from devito.builtins import initialize_function, gaussian_smooth, mmax, mmin
 from devito.tools import as_tuple
 
@@ -298,7 +299,7 @@ class SeismicModel(GenericModel):
         - vti: [vp, epsilon, delta]
         - tti: [epsilon, delta, theta, phi]
         """
-        params = []
+        # params = [] # Commented this variable for it dos not seem to have any use
         # Buoyancy
         b = kwargs.get('b', 1)
 
@@ -315,12 +316,19 @@ class SeismicModel(GenericModel):
         else:
             # All other seismic models have at least a velocity
             self.vp = self._gen_phys_param(vp, 'vp', space_order)
+
         # Initialize rest of the input physical parameters
         for name in self._known_parameters:
             if kwargs.get(name) is not None:
                 field = self._gen_phys_param(kwargs.get(name), name, space_order)
                 setattr(self, name, field)
-                params.append(name)
+                # params.append(name)
+
+        # Initialize the vector reflectivity map
+        if 'r' not in kwargs:
+            z = self.vp * 1/self.b
+            r = 0.5 * grad(z, .5)/z
+            setattr(self, 'r', r)
 
     @property
     def _max_vp(self):
