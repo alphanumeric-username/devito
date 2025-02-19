@@ -4,7 +4,8 @@ from devito import *
 def ForwardOperator(model, geometry, space_order=4,
                     save=False, kernel='OT2', **kwargs):
     """
-    Construct a forward modelling operator in an acoustic medium.
+    Construct a forward modelling operator in an acoustic medium through a 
+    wave equation in terms of the P-wave velocity and the vector reflectivity.
 
     Parameters
     ----------
@@ -23,8 +24,7 @@ def ForwardOperator(model, geometry, space_order=4,
     """
     m = model.m
     vp = model.vp
-    z = vp/model.b
-    r = -1/2 * z*grad(1/z)
+    r = model.r
 
     # Create symbols for forward wavefield, source and receivers
     u = TimeFunction(name='u', grid=model.grid,
@@ -69,23 +69,27 @@ def AdjointOperator(model, geometry, space_order=4,
         Type of discretization, 'OT2' or 'OT4'.
     """
     m = model.m
+    vp = model.vp
+    r = model.r
 
     v = TimeFunction(name='v', grid=model.grid, save=None,
                      time_order=2, space_order=space_order)
+
     srca = geometry.new_src(name='srca', src_type=None)
     rec = geometry.rec
 
     s = model.grid.stepping_dim.spacing
-    eqn = iso_stencil(v, model, kernel, forward=False)
+    eqn = m*v.dt2 - (v.laplace - div(1/vp * grad(vp, shift=.5) * v, shift=-.5) + div(2*r*v, shift=-.5)) - model.damp * v.dt
+    stencil = Eq(v.backward, solve(eqn, v.backward))
 
     # Construct expression to inject receiver values
-    receivers = rec.inject(field=v.backward, expr=rec * s**2 / m)
+    receivers = rec.inject(field=v.backward, expr=rec * s**2)
 
     # Create interpolation expression for the adjoint-source
     source_a = srca.interpolate(expr=v)
 
     # Substitute spacing terms to reduce flops
-    return Operator(eqn + receivers + source_a, subs=model.spacing_map,
+    return Operator(stencil + receivers + source_a, subs=model.spacing_map,
                     name='Adjoint', **kwargs)
 
 

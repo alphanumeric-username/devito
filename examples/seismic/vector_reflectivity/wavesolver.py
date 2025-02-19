@@ -2,7 +2,7 @@ from devito import *
 from devito.tools import memoized_meth
 from examples.seismic import Model, AcquisitionGeometry
 
-from vector_reflectivity.operators import *
+from examples.seismic.vector_reflectivity.operators import *
 
 
 class VectorReflectivityAcousticWaveSolver():
@@ -32,6 +32,13 @@ class VectorReflectivityAcousticWaveSolver():
     def op_fwd(self, save=None):
         """Cached operator for forward runs with buffered wavefield"""
         return ForwardOperator(self.model, save=save, geometry=self.geometry,
+                               kernel=self.kernel, space_order=self.space_order,
+                               **self._kwargs)
+
+    @memoized_meth
+    def op_adj(self):
+        """Cached operator for adjoint runs"""
+        return AdjointOperator(self.model, save=None, geometry=self.geometry,
                                kernel=self.kernel, space_order=self.space_order,
                                **self._kwargs)
 
@@ -71,6 +78,47 @@ class VectorReflectivityAcousticWaveSolver():
         )
 
         return rec, u, summary
+
+
+    def adjoint(self, rec, srca=None, v=None, model=None, **kwargs):
+        """
+        Adjoint modelling function that creates the necessary
+        data objects for running an adjoint modelling operator.
+
+        Parameters
+        ----------
+        rec : SparseTimeFunction or array-like
+            The receiver data. Please note that
+            these act as the source term in the adjoint run.
+        srca : SparseTimeFunction or array-like
+            The resulting data for the interpolated at the
+            original source location.
+        v: TimeFunction, optional
+            The computed wavefield.
+        model : Model, optional
+            Object containing the physical parameters.
+        vp : Function or float, optional
+            The time-constant velocity.
+
+        Returns
+        -------
+        Adjoint source, wavefield and performance summary.
+        """
+        # Create a new adjoint source and receiver symbol
+        srca = srca or self.geometry.new_src(name='srca', src_type=None)
+
+        # Create the adjoint wavefield if not provided
+        v = v or TimeFunction(name='v', grid=self.model.grid,
+                              time_order=2, space_order=self.space_order)
+
+        model = model or self.model
+        # Pick vp from model unless explicitly provided
+        kwargs.update(model.physical_params(**kwargs))
+
+        # Execute operator and return wavefield and receiver data
+        summary = self.op_adj().apply(srca=srca, rec=rec, v=v,
+                                      dt=kwargs.pop('dt', self.dt), **kwargs)
+        return srca, v, summary
 
 
     def jacobian(self, dmin, src=None, rec=None, u=None, du=None, model=None, **kwargs):
