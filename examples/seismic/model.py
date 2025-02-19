@@ -299,7 +299,7 @@ class SeismicModel(GenericModel):
         - vti: [vp, epsilon, delta]
         - tti: [epsilon, delta, theta, phi]
         """
-        # params = [] # Commented this variable for it dos not seem to have any use
+        # params = [] # Commented out this variable for it dos not seem to have any use
         # Buoyancy
         b = kwargs.get('b', 1)
 
@@ -326,9 +326,10 @@ class SeismicModel(GenericModel):
 
         # Initialize the vector reflectivity map
         if 'r' not in kwargs:
-            z = self.vp * 1/self.b
-            r = 0.5 * grad(z, .5)/z
-            setattr(self, 'r', r)
+            if hasattr(self, 'vp'):
+                z = hasattr(self, 'b') and self.vp/self.b or self.vp
+                r = 0.5 * grad(z, .5)/z
+                setattr(self, 'r', r)
 
     @property
     def _max_vp(self):
