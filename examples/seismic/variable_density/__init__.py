@@ -1,0 +1,3 @@
+from examples.seismic.variable_density.operators import ForwardOperator
+from examples.seismic.variable_density.wavesolver import VariableDensityAcousticWaveSolver
+from examples.seismic.variable_density.variable_density_example import variable_density_setup
