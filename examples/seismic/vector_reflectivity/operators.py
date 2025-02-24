@@ -33,16 +33,15 @@ def ForwardOperator(model, geometry, space_order=4,
     src = geometry.src
     rec = geometry.rec
 
-
-    pde = m*u.dt2 - (u.laplace + 1/vp * grad(vp).T * grad(u) - 2 * r.T * grad(u)) + model.damp * u.dt
+    aco = m*u.dt2 - u.laplace + model.damp * u.dt
+    pde = aco - 1/vp * grad(vp).T * grad(u) + 2 * r.T * grad(u)
     stencil = Eq(u.forward, solve(pde, u.forward))
 
     s = model.grid.stepping_dim.spacing
 
     # Construct expression to inject source values
-    src_term = src.inject(field=u.forward, expr=src * s**2)
-    # src_term = src.inject(field=u.forward, expr=src * s**2 / m)
-
+    src_term = src.inject(field=u.forward, expr=src * s**2  / m)
+    
     # Create interpolation expression for receivers
     rec_term = rec.interpolate(expr=u)
 
@@ -52,7 +51,7 @@ def ForwardOperator(model, geometry, space_order=4,
 
 
 def AdjointOperator(model, geometry, space_order=4,
-                    kernel='OT2', **kwargs):
+                    kernel='OT2', save=False, **kwargs):
     """
     Construct an adjoint modelling operator in an acoustic media.
 
@@ -72,24 +71,31 @@ def AdjointOperator(model, geometry, space_order=4,
     vp = model.vp
     r = model.r
 
-    v = TimeFunction(name='v', grid=model.grid, save=None,
+    v = TimeFunction(name='v', grid=model.grid, 
+                     save=geometry.nt if save else None,
                      time_order=2, space_order=space_order)
 
     srca = geometry.new_src(name='srca', src_type=None)
     rec = geometry.rec
 
     s = model.grid.stepping_dim.spacing
-    eqn = m*v.dt2 - (v.laplace - div(1/vp * grad(vp, shift=.5) * v, shift=-.5) + div(2*r*v, shift=-.5)) - model.damp * v.dt
+
+    aco = m*v.dt2 - v.laplace + model.damp * v.dt.T
+    eqn = m*v.dt2 - (v.laplace - div(grad(vp, .5) * v/vp, -.5) + div(2*r*v, -.5)) + model.damp * v.dt.T
+    # eqn = aco + div(grad(vp, -.5) * v/vp, .5)
+    # eqn = aco + div(grad(1/vp, -.5) * v*vp, .5)
     stencil = Eq(v.backward, solve(eqn, v.backward))
 
     # Construct expression to inject receiver values
-    receivers = rec.inject(field=v.backward, expr=rec * s**2)
+    receivers = rec.inject(field=v.backward, expr=rec * s**2 / m)
 
     # Create interpolation expression for the adjoint-source
     source_a = srca.interpolate(expr=v)
 
     # Substitute spacing terms to reduce flops
-    return Operator(stencil + receivers + source_a, subs=model.spacing_map,
+    # return Operator([stencil], subs=model.spacing_map,
+    #                 name='Adjoint', **kwargs)
+    return Operator([stencil] + receivers + source_a, subs=model.spacing_map,
                     name='Adjoint', **kwargs)
 
 

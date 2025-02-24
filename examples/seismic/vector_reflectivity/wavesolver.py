@@ -36,9 +36,9 @@ class VectorReflectivityAcousticWaveSolver():
                                **self._kwargs)
 
     @memoized_meth
-    def op_adj(self):
+    def op_adj(self, save=None):
         """Cached operator for adjoint runs"""
-        return AdjointOperator(self.model, save=None, geometry=self.geometry,
+        return AdjointOperator(self.model, save=save, geometry=self.geometry,
                                kernel=self.kernel, space_order=self.space_order,
                                **self._kwargs)
 
@@ -80,7 +80,7 @@ class VectorReflectivityAcousticWaveSolver():
         return rec, u, summary
 
 
-    def adjoint(self, rec, srca=None, v=None, model=None, **kwargs):
+    def adjoint(self, rec, srca=None, v=None, model=None, save=None, **kwargs):
         """
         Adjoint modelling function that creates the necessary
         data objects for running an adjoint modelling operator.
@@ -109,6 +109,7 @@ class VectorReflectivityAcousticWaveSolver():
 
         # Create the adjoint wavefield if not provided
         v = v or TimeFunction(name='v', grid=self.model.grid,
+                              save=self.geometry.nt if save else None,
                               time_order=2, space_order=self.space_order)
 
         model = model or self.model
@@ -116,7 +117,7 @@ class VectorReflectivityAcousticWaveSolver():
         kwargs.update(model.physical_params(**kwargs))
 
         # Execute operator and return wavefield and receiver data
-        summary = self.op_adj().apply(srca=srca, rec=rec, v=v,
+        summary = self.op_adj(save).apply(srca=srca, rec=rec, v=v,
                                       dt=kwargs.pop('dt', self.dt), **kwargs)
         return srca, v, summary
 
