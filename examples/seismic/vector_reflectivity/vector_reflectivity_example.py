@@ -67,56 +67,6 @@ def run(shape=(50, 50, 50), spacing=(20.0, 20.0, 20.0), tn=1000.0,
     return summary.gflopss, summary.oi, summary.timings, [rec, u.data._local]
 
 
-# @pytest.mark.parametrize('shape', [(101,), (51, 51), (16, 16, 16)])
-# @pytest.mark.parametrize('k', ['OT2', 'OT4'])
-# @pytest.mark.parametrize('interp', ['linear', 'sinc'])
-# def test_isoacoustic_stability(shape, k, interp):
-#     spacing = tuple([20]*len(shape))
-#     _, _, _, [rec, _] = run(shape=shape, spacing=spacing, tn=20000.0, nbl=0, kernel=k,
-#                             interpolation=interp)
-#     assert np.isfinite(norm(rec))
-
-
-# @pytest.mark.parametrize('fs, normrec, dtype, interp', [
-#     (True, 369.955, np.float32, 'linear'),
-#     (False, 459.1678, np.float64, 'linear'),
-#     (True, 402.216, np.float32, 'sinc'),
-#     (False, 509.0681, np.float64, 'sinc')])
-# def test_isoacoustic(fs, normrec, dtype, interp):
-#     _, _, _, [rec, _] = run(fs=fs, dtype=dtype, interpolation=interp)
-#     assert np.isclose(norm(rec), normrec, rtol=1e-3, atol=0)
-
-
-def test_adjoint():
-    tn = 500.  # Final time
-
-    presets = {
-        'layers-elastic': {'preset': 'layers-elastic', 'nlayers': 2},
-    }
-    # Create solver from preset
-    solver = iso_elastic_setup(shape=(20, 25), spacing=[15. for _ in shape], kernel=None,
-                            nbl=10, tn=tn, space_order=2, time_order=1,
-                            **(presets['layers-elastic']), dtype=np.float64)
-
-    # Create adjoint receiver symbol
-    srca = Receiver(name='srca', grid=solver.model.grid,
-                    time_range=solver.geometry.time_axis,
-                    coordinates=solver.geometry.src_positions)
-
-    # Run forward and adjoint operators
-    rec = solver.forward(save=False)[0]
-    solver.adjoint(rec=rec, srca=srca)
-
-    # Adjoint test: Verify <Ax,y> matches  <x, A^Ty> closely
-    term1 = np.dot(srca.data.reshape(-1), solver.geometry.src.data)
-    term2 = norm(rec) ** 2
-    print('<x, A*y>: %f, <Ax,y>: %f, difference: %4.4e, ratio: %f'
-        % (term1, term2, (term1 - term2)/term1, term1/term2))
-
-
-    assert np.isclose((term1 - term2)/term1, 0., atol=1.e-11)
-
-
 if __name__ == "__main__":
     description = ("Example script for a set of acoustic operators.")
     parser = seismic_args(description)
