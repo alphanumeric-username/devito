@@ -327,8 +327,8 @@ class SeismicModel(GenericModel):
         # Initialize the vector reflectivity map
         if 'r' not in kwargs:
             if hasattr(self, 'vp'):
-                z = hasattr(self, 'b') and self.vp/self.b or self.vp
-                r = 0.5 * grad(z, .5)/z
+                z = self.vp/self.b if hasattr(self, 'b') else self.vp
+                r = grad(0.5 * z, .5)/z
                 setattr(self, 'r', r)
 
     @property
