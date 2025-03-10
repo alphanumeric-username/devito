@@ -33,8 +33,7 @@ def ForwardOperator(model, geometry, space_order=4,
     src = geometry.src
     rec = geometry.rec
 
-    aco = m*u.dt2 - u.laplace + model.damp * u.dt
-    pde = aco - 1/vp * grad(vp).T * grad(u) + 2 * r.T * grad(u)
+    pde = m * u.dt2 - 1/vp * div(vp*grad(u, .5), -.5) + 2 * div(u * r,-.5) - 2 * u * div(r, -.5) + model.damp * u.dt
     stencil = Eq(u.forward, solve(pde, u.forward))
 
     s = model.grid.stepping_dim.spacing
@@ -80,10 +79,7 @@ def AdjointOperator(model, geometry, space_order=4,
 
     s = model.grid.stepping_dim.spacing
 
-    aco = m*v.dt2 - v.laplace + model.damp * v.dt.T
-    eqn = m*v.dt2 - (v.laplace - div(grad(vp, .5) * v/vp, -.5) + div(2*r*v, -.5)) + model.damp * v.dt.T
-    # eqn = aco + div(grad(vp, -.5) * v/vp, .5)
-    # eqn = aco + div(grad(1/vp, -.5) * v*vp, .5)
+    eqn = m * v.dt2 - div(vp * grad(v/vp, .5), -.5) - 2 * r.T * grad(v, .5) - 2 * v * div(r, -.5) + model.damp * v.dt.T
     stencil = Eq(v.backward, solve(eqn, v.backward))
 
     # Construct expression to inject receiver values
@@ -93,8 +89,6 @@ def AdjointOperator(model, geometry, space_order=4,
     source_a = srca.interpolate(expr=v)
 
     # Substitute spacing terms to reduce flops
-    # return Operator([stencil], subs=model.spacing_map,
-    #                 name='Adjoint', **kwargs)
     return Operator([stencil] + receivers + source_a, subs=model.spacing_map,
                     name='Adjoint', **kwargs)
 

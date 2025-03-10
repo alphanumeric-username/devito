@@ -23,6 +23,10 @@ def ForwardOperator(model, geometry, space_order=4,
     kernel : str, optional
         Type of discretization, 'OT2' or 'OT4'.
     """
+    m = model.m
+    b = model.b
+    rho = 1/b
+
     # Create symbols for forward wavefield, source and receivers
     u = TimeFunction(name='u', grid=model.grid,
                      save=geometry.nt if save else None,
@@ -32,13 +36,16 @@ def ForwardOperator(model, geometry, space_order=4,
 
 
     # Create the stencil
-    kappa = 1/(model.m * model.b)
-    pde = u.dt2 - kappa * div(model.b * grad(u, shift=.5), shift=-.5) + model.damp * u.dt
+
+    pde = m*u.dt2 - rho * div(b * grad(u, .5), -.5) + model.damp * u.dt
+
     stencil = Eq(u.forward, solve(pde, u.forward))
 
+    s = model.grid.stepping_dim.spacing
+
     # Create the equation
-    src_term = src.inject(u.forward, expr = src*model.critical_dt**2/model.m)
-    rec_term = rec.interpolate(expr=u.forward)
+    src_term = src.inject(u.forward, expr = src* s**2 / m)
+    rec_term = rec.interpolate(expr=u)
 
     equation = [stencil] + src_term + rec_term
 
@@ -63,6 +70,8 @@ def AdjointOperator(model, geometry, space_order=4,
         Type of discretization, 'OT2' or 'OT4'.
     """
     m = model.m
+    b = model.b
+    rho  = 1/b
 
     v = TimeFunction(name='v', grid=model.grid, 
                      save=geometry.nt if save else None,
@@ -73,19 +82,18 @@ def AdjointOperator(model, geometry, space_order=4,
 
     s = model.grid.stepping_dim.spacing
 
-    kappa = 1/(model.b * model.m)
-    eqn = v.dt2 - div(model.b * grad(kappa * v, shift=0.5), shift=-0.5) + model.damp * v.dt.T
+    eqn = m*v.dt2 - div(b * grad(rho * v, .5), -.5) + model.damp * v.dt.T
+   
     stencil = Eq(v.backward, solve(eqn, v.backward))
 
     # Construct expression to inject receiver values
     receivers = rec.inject(field=v.backward, expr=rec * s**2 / m)
 
     # Create interpolation expression for the adjoint-source
+    
     source_a = srca.interpolate(expr=v)
 
     # Substitute spacing terms to reduce flops
-    # return Operator([stencil], subs=model.spacing_map,
-    #                 name='Adjoint', **kwargs)
     return Operator([stencil] + receivers + source_a, subs=model.spacing_map,
                     name='Adjoint', **kwargs)
 
@@ -149,6 +157,7 @@ def GradientOperator(model, geometry, space_order=4, save=True,
     """
     m = model.m
     b = model.b
+    kappa = 1/(m * b)
     rec = geometry.rec
 
     gradient = Function(name = 'grad', grid = model.grid)
@@ -167,7 +176,6 @@ def GradientOperator(model, geometry, space_order=4, save=True,
         space_order=space_order
     )
 
-    kappa = 1/(m * b)
     pde = v.dt2 - div(b * grad(kappa * v, shift=.5), shift=-.5) + model.damp * v.dt.T
 
     eqn = Eq(v.backward, solve(pde, v.backward))
