@@ -7,7 +7,7 @@ except:
 
 from devito import (Grid, SubDomain, Function, Constant, warning,
                     SubDimension, Eq, Inc, Operator, div, sin, Abs,
-                    grad)
+                    grad, VectorFunction)
 from devito.builtins import initialize_function, gaussian_smooth, mmax, mmin
 from devito.tools import as_tuple
 
@@ -178,6 +178,18 @@ class GenericModel:
             function = Function(name=name, grid=self.grid, space_order=space_order,
                                 parameter=is_param, avg_mode=avg_mode)
             initialize_function(function, field, self.padsizes)
+        elif isinstance(field, list):
+            ncomp = min(len(field), len(self.space_dimensions))
+            components = []
+            for i in range(ncomp):
+                dimname = self.space_dimensions[i]
+                # comp = Function(name=f'{name}_{i + 1}', grid=self.grid, space_order=space_order,
+                comp = Function(name=f'{name}_{dimname}', grid=self.grid, space_order=space_order,
+                                parameter=is_param, avg_mode=avg_mode)
+                initialize_function(comp, field[i], self.padsizes)
+                components.append(comp)
+            function = VectorFunction(name=name, grid=self.grid, space_order=space_order,
+                                parameter=is_param, avg_mode=avg_mode, components=components)
         else:
             function = Constant(name=name, value=field, dtype=self.grid.dtype)
         self._physical_parameters.update([name])
@@ -270,7 +282,7 @@ class SeismicModel(GenericModel):
         S-wave attenuation.
     """
     _known_parameters = ['vp', 'damp', 'vs', 'b', 'epsilon', 'delta',
-                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu']
+                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
 
     def __init__(self, origin, spacing, shape, space_order, vp, nbl=20, fs=False,
                  dtype=np.float32, subdomains=(), bcs="mask", grid=None, **kwargs):
