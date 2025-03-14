@@ -101,6 +101,9 @@ class TestAdjoint:
         # ('layers', (60, ), 'OT2', 12, 2, vector_reflectivity_setup),
         # ('layers', (60, ), 'OT2', 8, 2, vector_reflectivity_setup),
         # ('layers', (60, ), 'OT4', 4, 2, vector_reflectivity_setup),
+        # ('layers-viscoacoustic', (60, ), 'OT2', 12, 2, vector_reflectivity_setup),
+        # ('layers-viscoacoustic', (60, ), 'OT2', 8, 2, vector_reflectivity_setup),
+        # ('layers-viscoacoustic', (60, ), 'OT4', 4, 2, vector_reflectivity_setup),
         # # 2D tests with varying time and space orders
         # ('layers', (60, 70), 'OT2', 12, 2, vector_reflectivity_setup),
         # ('layers', (60, 70), 'OT2', 8, 2, vector_reflectivity_setup),
