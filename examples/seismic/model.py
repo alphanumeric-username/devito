@@ -168,7 +168,15 @@ class GenericModel:
         Return all set physical parameters and update to input values if provided
         """
         known = [getattr(self, i) for i in self.physical_parameters]
-        return {i.name: kwargs.get(i.name, i) or i for i in known}
+        params = {i.name: kwargs.get(i.name, i) or i for i in known}
+        params2 = {}
+        for k, v in params.items():
+            if type(k) == VectorFunction:
+                for component in k:
+                    params2[component.name] = component
+            else:
+                params2[k] = v
+        return params2
 
     def _gen_phys_param(self, field, name, space_order, is_param=True,
                         default_value=0, avg_mode='arithmetic', **kwargs):
@@ -188,6 +196,7 @@ class GenericModel:
                                 parameter=is_param, avg_mode=avg_mode)
                 initialize_function(comp, field[i], self.padsizes)
                 components.append(comp)
+
             function = VectorFunction(name=name, grid=self.grid, space_order=space_order,
                                 parameter=is_param, avg_mode=avg_mode, components=components)
         else:
@@ -282,7 +291,8 @@ class SeismicModel(GenericModel):
         S-wave attenuation.
     """
     _known_parameters = ['vp', 'damp', 'vs', 'b', 'epsilon', 'delta',
-                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
+                        #  'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
+                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu']
 
     def __init__(self, origin, spacing, shape, space_order, vp, nbl=20, fs=False,
                  dtype=np.float32, subdomains=(), bcs="mask", grid=None, **kwargs):
