@@ -191,9 +191,8 @@ class GenericModel:
             components = []
             for i in range(ncomp):
                 dimname = self.space_dimensions[i]
-                # comp = Function(name=f'{name}_{i + 1}', grid=self.grid, space_order=space_order,
-                comp = Function(name=f'{name}_{dimname}', grid=self.grid, space_order=space_order,
-                                parameter=is_param, avg_mode=avg_mode)
+                comp = Function(name=f'{name}_{dimname}', grid=self.grid, 
+                                space_order=space_order, parameter=is_param, avg_mode=avg_mode)
                 initialize_function(comp, field[i], self.padsizes)
                 components.append(comp)
 
@@ -291,8 +290,8 @@ class SeismicModel(GenericModel):
         S-wave attenuation.
     """
     _known_parameters = ['vp', 'damp', 'vs', 'b', 'epsilon', 'delta',
-                        #  'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
-                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu']
+                         'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
+                        #  'theta', 'phi', 'qp', 'qs', 'lam', 'mu']
 
     def __init__(self, origin, spacing, shape, space_order, vp, nbl=20, fs=False,
                  dtype=np.float32, subdomains=(), bcs="mask", grid=None, **kwargs):
