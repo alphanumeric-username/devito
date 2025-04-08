@@ -349,7 +349,8 @@ class SeismicModel(GenericModel):
         if 'r' not in kwargs:
             if hasattr(self, 'vp'):
                 z = self.vp/self.b if hasattr(self, 'b') else self.vp
-                r = grad(0.5 * z, .5)/z
+                r = VectorFunction(name='r', grid=self.grid, space_order=space_order)
+                Operator([Eq(r, grad(0.5 * z, .5)/z)])()
                 setattr(self, 'r', r)
 
     @property
