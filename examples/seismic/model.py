@@ -352,8 +352,11 @@ class SeismicModel(GenericModel):
                 z = Function(name='z', grid=self.grid, space_order=space_order)
                 Operator([Eq(z, z_stencil)])()
 
-                r =  grad(0.5 * z)/z
                 # r =  grad(0.5 * z)/z
+                # r =  grad(0.5 * z)/z
+                # r =  (1/self.b * grad(0.5 * self.vp) + self.vp * grad(0.5 * 1/self.b))/z
+                # r =  grad(0.5 * self.vp)/self.vp + self.b * grad(0.5 * 1/self.b)
+                r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b
                 setattr(self, 'r', r)
                 # r = VectorFunction(name='r', grid=self.grid, space_order=space_order)
                 # Operator([Eq(r, grad(0.5 * z, .5)/z)])()
