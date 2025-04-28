@@ -348,9 +348,12 @@ class SeismicModel(GenericModel):
         # Initialize the vector reflectivity map
         if 'r' not in kwargs:
             if hasattr(self, 'vp'):
-                z = self.vp/self.b if hasattr(self, 'b') else self.vp
-                # r =  grad(0.5 * z, .5)/z
+                z_stencil = self.vp/self.b if hasattr(self, 'b') else self.vp
+                z = Function(name='z', grid=self.grid, space_order=space_order)
+                Operator([Eq(z, z_stencil)])()
+
                 r =  grad(0.5 * z)/z
+                # r =  grad(0.5 * z)/z
                 setattr(self, 'r', r)
                 # r = VectorFunction(name='r', grid=self.grid, space_order=space_order)
                 # Operator([Eq(r, grad(0.5 * z, .5)/z)])()
