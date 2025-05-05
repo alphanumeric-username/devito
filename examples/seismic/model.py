@@ -1,5 +1,7 @@
 import numpy as np
 from sympy import finite_diff_weights as fd_w
+
+from devito.types.utils import NODE
 try:
     import pytest
 except:
@@ -184,7 +186,7 @@ class GenericModel:
             return default_value
         if isinstance(field, np.ndarray):
             function = Function(name=name, grid=self.grid, space_order=space_order,
-                                parameter=is_param, avg_mode=avg_mode)
+                                parameter=is_param, avg_mode=avg_mode, staggered=NODE)
             initialize_function(function, field, self.padsizes)
         elif isinstance(field, list):
             ncomp = min(len(field), len(self.space_dimensions))
@@ -348,18 +350,19 @@ class SeismicModel(GenericModel):
         # Initialize the vector reflectivity map
         if 'r' not in kwargs:
             if hasattr(self, 'vp'):
-                z_stencil = self.vp/self.b if hasattr(self, 'b') else self.vp
-                z = Function(name='z', grid=self.grid, space_order=space_order)
-                Operator([Eq(z, z_stencil)])()
+                print('a')
+                # z_stencil = self.vp/self.b if hasattr(self, 'b') else self.vp
+                # z = Function(name='z', grid=self.grid, space_order=space_order)
+                # Operator([Eq(z, z_stencil)])()
 
                 # r =  grad(0.5 * z)/z
                 # r =  grad(0.5 * z)/z
                 # r =  (1/self.b * grad(0.5 * self.vp) + self.vp * grad(0.5 * 1/self.b))/z
                 # r =  grad(0.5 * self.vp)/self.vp + self.b * grad(0.5 * 1/self.b)
                 r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b
+                # r2 = VectorFunction(name='r', grid=self.grid, space_order=space_order)
+                # Operator([Eq(r2, r)])()
                 setattr(self, 'r', r)
-                # r = VectorFunction(name='r', grid=self.grid, space_order=space_order)
-                # Operator([Eq(r, grad(0.5 * z, .5)/z)])()
 
     @property
     def _max_vp(self):
