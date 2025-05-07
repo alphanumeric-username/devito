@@ -360,9 +360,9 @@ class SeismicModel(GenericModel):
                 # r =  (1/self.b * grad(0.5 * self.vp) + self.vp * grad(0.5 * 1/self.b))/z
                 # r =  grad(0.5 * self.vp)/self.vp + self.b * grad(0.5 * 1/self.b)
                 r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b
-                # r2 = VectorFunction(name='r', grid=self.grid, space_order=space_order)
-                # Operator([Eq(r2, r)])()
-                setattr(self, 'r', r)
+                r2 = VectorFunction(name='r', grid=self.grid, space_order=space_order)
+                Operator([Eq(r2, r)])()
+                setattr(self, 'r', r2)
 
     @property
     def _max_vp(self):
