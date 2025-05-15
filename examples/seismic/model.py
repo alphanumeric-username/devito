@@ -199,7 +199,7 @@ class GenericModel:
                 components.append(comp)
 
             function = VectorFunction(name=name, grid=self.grid, space_order=space_order,
-                                parameter=is_param, avg_mode=avg_mode, components=components, staggered=staggered)
+                                parameter=is_param, avg_mode=avg_mode, components=components, staggered=[staggered for _ in range(ncomp)])
         else:
             function = Constant(name=name, value=field, dtype=self.grid.dtype)
         self._physical_parameters.update([name])
