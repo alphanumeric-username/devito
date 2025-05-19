@@ -1,0 +1,1 @@
+psimage n1=251 width=10 height=10 d1s=0.25 d2s=0.25 perc=98 legend=1 < ../lap_nx251_nz251.bin > aco_lap.eps
