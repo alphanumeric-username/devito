@@ -12,3 +12,5 @@ docs/_build
 
 devito.egg-info/*
 *.pdf
+
+*.bin
