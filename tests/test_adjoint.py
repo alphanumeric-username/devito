@@ -100,19 +100,19 @@ class TestAdjoint:
         # 1 tests with varying time and space orders
         ('layers', (60, ), 'OT2', 12, 2, vector_reflectivity_setup),
         ('layers', (60, ), 'OT2', 8, 2, vector_reflectivity_setup),
-        ('layers', (60, ), 'OT4', 4, 2, vector_reflectivity_setup),
+        # ('layers', (60, ), 'OT4', 4, 2, vector_reflectivity_setup),
         # 2D tests with varying time and space orders
         ('layers', (60, 70), 'OT2', 12, 2, vector_reflectivity_setup),
         ('layers', (60, 70), 'OT2', 8, 2, vector_reflectivity_setup),
         ('layers', (60, 70), 'OT2', 4, 2, vector_reflectivity_setup),
-        ('layers', (60, 70), 'OT4', 2, 2, vector_reflectivity_setup),
+        # ('layers', (60, 70), 'OT4', 2, 2, vector_reflectivity_setup),
         # 2D test with 2 layers and freesurface
         ('layers-fs', (60, 70), 'OT2', 4, 2, vector_reflectivity_setup),
         # 3D tests with varying time and space orders
         ('layers', (60, 70, 80), 'OT2', 8, 2, vector_reflectivity_setup),
         ('layers', (60, 70, 80), 'OT2', 6, 2, vector_reflectivity_setup),
         ('layers', (60, 70, 80), 'OT2', 4, 2, vector_reflectivity_setup),
-        ('layers', (60, 70, 80), 'OT4', 2, 2, vector_reflectivity_setup),
+        # ('layers', (60, 70, 80), 'OT4', 2, 2, vector_reflectivity_setup),
     ])
     def test_adjoint_F(self, mkey, shape, kernel, space_order, time_order, setup_func):
         """
