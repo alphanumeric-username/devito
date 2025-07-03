@@ -5,7 +5,7 @@ except ImportError:
     pass
 
 from devito.logger import info
-from devito import Constant, Function, smooth, norm
+from devito import Constant, Function, smooth, norm, NODE
 from examples.seismic.vector_reflectivity import VectorReflectivityAcousticWaveSolver
 from examples.seismic import demo_model, setup_geometry, seismic_args
 
@@ -13,9 +13,10 @@ from examples.seismic import demo_model, setup_geometry, seismic_args
 def vector_reflectivity_setup(shape=(50, 50, 50), spacing=(15.0, 15.0, 15.0),
                    tn=500., kernel='OT2', space_order=4, nbl=10,
                    preset='layers-isotropic', fs=False, **kwargs):
+    
     model = demo_model(preset, space_order=space_order, shape=shape, nbl=nbl,
                        dtype=kwargs.pop('dtype', np.float32), spacing=spacing,
-                       fs=fs, **kwargs)
+                       fs=fs, staggered=kwargs.pop('staggered', NODE), **kwargs)
 
 
     # Source and receiver geometries
@@ -60,15 +61,15 @@ def run(shape=(50, 50, 50), spacing=(20.0, 20.0, 20.0), tn=1000.0,
 
     info("Applying Adjoint")
     solver.adjoint(rec, autotune=autotune)
-    info("Applying Born")
-    solver.jacobian(dm, autotune=autotune)
-    info("Applying Gradient")
-    solver.jacobian_adjoint(rec, u, autotune=autotune, checkpointing=checkpointing)
+    # info("Applying Born")
+    # solver.jacobian(dm, autotune=autotune)
+    # info("Applying Gradient")
+    # solver.jacobian_adjoint(rec, u, autotune=autotune, checkpointing=checkpointing)
     return summary.gflopss, summary.oi, summary.timings, [rec, u.data._local]
 
 
 if __name__ == "__main__":
-    description = ("Example script for a set of acoustic operators.")
+    description = ("Example script for a set of acoustic operators based on vector reflectivity.")
     parser = seismic_args(description)
     parser.add_argument('--fs', dest='fs', default=False, action='store_true',
                         help="Whether or not to use a freesurface")

@@ -22,10 +22,6 @@ def ForwardOperator(model, geometry, space_order=4,
     kernel : str, optional
         Type of discretization, 'OT2' or 'OT4'.
     """
-    m = model.m
-    vp = model.vp
-    r = model.r
-
     # Create symbols for forward wavefield, source and receivers
     u = TimeFunction(name='u', grid=model.grid,
                      save=geometry.nt if save else None,
@@ -33,7 +29,11 @@ def ForwardOperator(model, geometry, space_order=4,
     src = geometry.src
     rec = geometry.rec
 
-    pde = m * u.dt2 - 1/vp * div(vp*grad(u, .5), -.5) + 2 * div(u * r,-.5) - 2 * u * div(r, -.5) + model.damp * u.dt
+    m = model.m
+    r = model.r
+    vp = model.vp
+
+    pde = m * u.dt2 - u.laplace + (- 1/vp*grad(vp) + 2*r).T * grad(u) + model.damp * u.dt
     stencil = Eq(u.forward, solve(pde, u.forward))
 
     s = model.grid.stepping_dim.spacing
@@ -66,10 +66,6 @@ def AdjointOperator(model, geometry, space_order=4,
     kernel : str, optional
         Type of discretization, 'OT2' or 'OT4'.
     """
-    m = model.m
-    vp = model.vp
-    r = model.r
-
     v = TimeFunction(name='v', grid=model.grid, 
                      save=geometry.nt if save else None,
                      time_order=2, space_order=space_order)
@@ -79,8 +75,12 @@ def AdjointOperator(model, geometry, space_order=4,
 
     s = model.grid.stepping_dim.spacing
 
-    eqn = m * v.dt2 - div(vp * grad(v/vp, .5), -.5) - 2 * r.T * grad(v, .5) - 2 * v * div(r, -.5) + model.damp * v.dt.T
-    stencil = Eq(v.backward, solve(eqn, v.backward))
+    m = model.m
+    vp = model.vp
+    r = model.r
+
+    pde = m * v.dt2 - v.laplace - div((-grad(vp)/vp + 2*r) * v, .5) + model.damp * v.dt.T
+    stencil = Eq(v.backward, solve(pde, v.backward))
 
     # Construct expression to inject receiver values
     receivers = rec.inject(field=v.backward, expr=rec * s**2 / m)
