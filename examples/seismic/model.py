@@ -348,12 +348,21 @@ class SeismicModel(GenericModel):
                 # params.append(name)
 
         # Initialize the vector reflectivity map
-        if 'r' not in kwargs:
-            if hasattr(self, 'vp'):
-                r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b if hasattr(self, 'b')\
-                                                                             else grad(0.5 * self.vp)/self.vp
 
-                staggered = kwargs.get('staggered')
+        if 'r' not in kwargs and hasattr(self, 'vp'):
+            staggered = kwargs.get('staggered')
+            
+            if type(self.vp) == Constant:
+                r = VectorFunction(name='r', grid=self.grid, components=[
+                    Constant(name='r_{dimname}', value=0, dtype=self.dtype)
+                    for dimname in self.space_dimensions
+                ], staggered=[staggered for _ in self.space_dimensions])
+
+                setattr(self, 'r', Constant(name='r'))
+            else:
+                r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b if hasattr(self, 'b')\
+                                                                            else grad(0.5 * self.vp)/self.vp
+
                 r2 = VectorFunction(name='r', grid=self.grid, space_order=space_order, 
                                         staggered=[staggered for _ in self.space_dimensions]
                                     )
