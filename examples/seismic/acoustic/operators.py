@@ -156,7 +156,7 @@ def ForwardOperator(model, geometry, space_order=4,
 
 
 def AdjointOperator(model, geometry, space_order=4,
-                    kernel='OT2', **kwargs):
+                    kernel='OT2', save=False, **kwargs):
     """
     Construct an adjoint modelling operator in an acoustic media.
 
@@ -174,7 +174,8 @@ def AdjointOperator(model, geometry, space_order=4,
     """
     m = model.m
 
-    v = TimeFunction(name='v', grid=model.grid, save=None,
+    v = TimeFunction(name='v', grid=model.grid, 
+                     save=geometry.nt if save else None,
                      time_order=2, space_order=space_order)
     srca = geometry.new_src(name='srca', src_type=None)
     rec = geometry.rec

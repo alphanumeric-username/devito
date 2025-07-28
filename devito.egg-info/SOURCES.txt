@@ -1,7 +1,10 @@
 LICENSE.md
 MANIFEST.in
 README.md
+requirements-mpi.txt
+requirements-nvidia.txt
 requirements-optional.txt
+requirements-testing.txt
 requirements.txt
 setup.cfg
 setup.py
@@ -16,6 +19,7 @@ benchmarks/user/advisor/roofline.py
 benchmarks/user/advisor/run_advisor.py
 devito/__init__.py
 devito/_version.py
+devito/deprecations.py
 devito/exceptions.py
 devito/logger.py
 devito/parameters.py
@@ -54,6 +58,7 @@ devito/finite_differences/differentiable.py
 devito/finite_differences/elementary.py
 devito/finite_differences/finite_difference.py
 devito/finite_differences/operators.py
+devito/finite_differences/rsfd.py
 devito/finite_differences/tools.py
 devito/ir/__init__.py
 devito/ir/clusters/__init__.py
@@ -82,9 +87,12 @@ devito/ir/support/symregistry.py
 devito/ir/support/syncs.py
 devito/ir/support/utils.py
 devito/ir/support/vector.py
+devito/mpatches/__init__.py
+devito/mpatches/rationaltools.py
 devito/mpi/__init__.py
 devito/mpi/distributed.py
 devito/mpi/halo_scheme.py
+devito/mpi/reduction_scheme.py
 devito/mpi/routines.py
 devito/operations/__init__.py
 devito/operations/interpolators.py
@@ -111,7 +119,9 @@ devito/passes/equations/linearity.py
 devito/passes/iet/__init__.py
 devito/passes/iet/asynchrony.py
 devito/passes/iet/definitions.py
+devito/passes/iet/dswap.py
 devito/passes/iet/engine.py
+devito/passes/iet/errors.py
 devito/passes/iet/instrument.py
 devito/passes/iet/langbase.py
 devito/passes/iet/linearization.py
@@ -124,6 +134,7 @@ devito/passes/iet/languages/__init__.py
 devito/passes/iet/languages/openacc.py
 devito/passes/iet/languages/openmp.py
 devito/passes/iet/languages/targets.py
+devito/passes/iet/languages/utils.py
 devito/symbolics/__init__.py
 devito/symbolics/extended_sympy.py
 devito/symbolics/inspection.py
@@ -185,11 +196,6 @@ examples/seismic/elastic/__init__.py
 examples/seismic/elastic/elastic_example.py
 examples/seismic/elastic/operators.py
 examples/seismic/elastic/wavesolver.py
-examples/seismic/multiparameter/__init__.py
-examples/seismic/multiparameter/viscoacoustic/__init__.py
-examples/seismic/multiparameter/viscoacoustic/operators.py
-examples/seismic/multiparameter/viscoacoustic/viscoacoustic_example.py
-examples/seismic/multiparameter/viscoacoustic/wavesolver.py
 examples/seismic/self_adjoint/__init__.py
 examples/seismic/self_adjoint/example_iso.py
 examples/seismic/self_adjoint/operators.py
@@ -218,6 +224,7 @@ examples/seismic/viscoelastic/viscoelastic_example.py
 examples/seismic/viscoelastic/wavesolver.py
 examples/userapi/__init__.py
 tests/test_adjoint.py
+tests/test_arch.py
 tests/test_autotuner.py
 tests/test_benchmark.py
 tests/test_buffering.py
@@ -226,6 +233,7 @@ tests/test_caching.py
 tests/test_checkpointing.py
 tests/test_cinterface.py
 tests/test_constant.py
+tests/test_cse.py
 tests/test_data.py
 tests/test_derivatives.py
 tests/test_differentiable.py
@@ -233,7 +241,9 @@ tests/test_dimension.py
 tests/test_dle.py
 tests/test_docstrings.py
 tests/test_dse.py
+tests/test_dswap.py
 tests/test_environment.py
+tests/test_error_checking.py
 tests/test_fission.py
 tests/test_gpu_common.py
 tests/test_gpu_openacc.py
@@ -243,15 +253,17 @@ tests/test_iet.py
 tests/test_interpolation.py
 tests/test_ir.py
 tests/test_linearize.py
+tests/test_lower_clusters.py
 tests/test_lower_exprs.py
 tests/test_mpi.py
-tests/test_msparse.py
 tests/test_operator.py
 tests/test_pickle.py
+tests/test_rebuild.py
 tests/test_resample.py
 tests/test_roundoff.py
 tests/test_save.py
 tests/test_skewing.py
+tests/test_sparse.py
 tests/test_staggered_utils.py
 tests/test_subdomains.py
 tests/test_symbolic_coefficients.py

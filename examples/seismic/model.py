@@ -1,12 +1,15 @@
 import numpy as np
 from sympy import finite_diff_weights as fd_w
+
+from devito.types.utils import NODE
 try:
     import pytest
 except:
     pass
 
 from devito import (Grid, SubDomain, Function, Constant, warning,
-                    SubDimension, Eq, Inc, Operator, div, sin, Abs)
+                    SubDimension, Eq, Inc, Operator, div, sin, Abs,
+                    grad, VectorFunction)
 from devito.builtins import initialize_function, gaussian_smooth, mmax, mmin
 from devito.tools import as_tuple
 
@@ -167,16 +170,36 @@ class GenericModel:
         Return all set physical parameters and update to input values if provided
         """
         known = [getattr(self, i) for i in self.physical_parameters]
-        return {i.name: kwargs.get(i.name, i) or i for i in known}
+        params = {i.name: kwargs.get(i.name, i) or i for i in known}
+        params2 = {}
+        for k, v in params.items():
+            if type(k) == VectorFunction:
+                for component in k:
+                    params2[component.name] = component
+            else:
+                params2[k] = v
+        return params2
 
     def _gen_phys_param(self, field, name, space_order, is_param=True,
-                        default_value=0, avg_mode='arithmetic', **kwargs):
+                        default_value=0, avg_mode='arithmetic', staggered=None, **kwargs):
         if field is None:
             return default_value
         if isinstance(field, np.ndarray):
             function = Function(name=name, grid=self.grid, space_order=space_order,
-                                parameter=is_param, avg_mode=avg_mode)
+                                parameter=is_param, avg_mode=avg_mode, staggered=staggered)
             initialize_function(function, field, self.padsizes)
+        elif isinstance(field, list):
+            ncomp = min(len(field), len(self.space_dimensions))
+            components = []
+            for i in range(ncomp):
+                dimname = self.space_dimensions[i]
+                comp = Function(name=f'{name}_{dimname}', grid=self.grid, 
+                                space_order=space_order, parameter=is_param, avg_mode=avg_mode, staggered=staggered)
+                initialize_function(comp, field[i], self.padsizes)
+                components.append(comp)
+
+            function = VectorFunction(name=name, grid=self.grid, space_order=space_order,
+                                parameter=is_param, avg_mode=avg_mode, components=components, staggered=[staggered for _ in range(ncomp)])
         else:
             function = Constant(name=name, value=field, dtype=self.grid.dtype)
         self._physical_parameters.update([name])
@@ -269,6 +292,7 @@ class SeismicModel(GenericModel):
         S-wave attenuation.
     """
     _known_parameters = ['vp', 'damp', 'vs', 'b', 'epsilon', 'delta',
+                        #  'theta', 'phi', 'qp', 'qs', 'lam', 'mu', 'r']
                          'theta', 'phi', 'qp', 'qs', 'lam', 'mu']
 
     def __init__(self, origin, spacing, shape, space_order, vp, nbl=20, fs=False,
@@ -298,7 +322,7 @@ class SeismicModel(GenericModel):
         - vti: [vp, epsilon, delta]
         - tti: [epsilon, delta, theta, phi]
         """
-        params = []
+        # params = [] # Commented out this variable for it dos not seem to have any use
         # Buoyancy
         b = kwargs.get('b', 1)
 
@@ -306,21 +330,44 @@ class SeismicModel(GenericModel):
         if 'vs' in kwargs:
             vs = kwargs.pop('vs')
             self.lam = self._gen_phys_param((vp**2 - 2. * vs**2)/b, 'lam', space_order,
-                                            is_param=True)
+                                            is_param=True, **kwargs)
             # Need to add small value to avoid division by zero
             if isinstance(vs, np.ndarray):
                 vs = vs + 1e-12
             self.mu = self._gen_phys_param(vs**2 / b, 'mu', space_order, is_param=True,
-                                           avg_mode='harmonic')
+                                           avg_mode='harmonic', **kwargs)
         else:
             # All other seismic models have at least a velocity
-            self.vp = self._gen_phys_param(vp, 'vp', space_order)
+            self.vp = self._gen_phys_param(vp, 'vp', space_order, **kwargs)
+
         # Initialize rest of the input physical parameters
         for name in self._known_parameters:
             if kwargs.get(name) is not None:
-                field = self._gen_phys_param(kwargs.get(name), name, space_order)
+                field = self._gen_phys_param(kwargs.get(name), name, space_order, **kwargs)
                 setattr(self, name, field)
-                params.append(name)
+                # params.append(name)
+
+        # Initialize the vector reflectivity map
+
+        if 'r' not in kwargs and hasattr(self, 'vp'):
+            staggered = kwargs.get('staggered')
+            
+            if type(self.vp) == Constant:
+                r = VectorFunction(name='r', grid=self.grid, components=[
+                    Constant(name='r_{dimname}', value=0, dtype=self.dtype)
+                    for dimname in self.space_dimensions
+                ], staggered=[staggered for _ in self.space_dimensions])
+
+                setattr(self, 'r', Constant(name='r'))
+            else:
+                r =  grad(0.5 * self.vp)/self.vp - grad(0.5 * self.b)/self.b if hasattr(self, 'b')\
+                                                                            else grad(0.5 * self.vp)/self.vp
+
+                r2 = VectorFunction(name='r', grid=self.grid, space_order=space_order, 
+                                        staggered=[staggered for _ in self.space_dimensions]
+                                    )
+                Operator([Eq(r2, r)])()
+                setattr(self, 'r', r2)
 
     @property
     def _max_vp(self):

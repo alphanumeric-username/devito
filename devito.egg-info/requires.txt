@@ -1,34 +1,30 @@
 pip>=9.0.1
-numpy>1.16
-sympy<1.13,>=1.9
-scipy
-flake8>=2.1.0
-nbval
-cached-property
-psutil<6.0,>=5.1.0
+psutil<7.0,>=5.1.0
 py-cpuinfo<10
 cgen>=2020.1
 codepy>=2019.1
 click<9.0
 multidict
-anytree<=2.9.0,>=2.4.3
-distributed<2023.7
+anytree<=2.12.1,>=2.4.3
+cloudpickle
+sympy<1.14,>=1.12.1
+numpy<2.2,>=2.0
+
+[ python_version >= "3.8"]
+pooch
 
 [extras]
 matplotlib
-pandas
-pyrevolve
-sotb-wrapper
-segyio
-h5py
-pooch
+pyrevolve==2.2.4
+scipy
+distributed
 
 [mpi]
-mpi4py<4.0
-ipyparallel<8.7
+mpi4py<4.0.2
+ipyparallel<9.1
 
 [nvidia]
-cupy-cuda110
+cupy-cuda12x
 dask-cuda
 jupyterlab>=3
 jupyterlab-nvdashboard
@@ -36,7 +32,13 @@ dask_labextension
 fsspec
 
 [tests]
-pytest<8.0,>=7.2
+pytest<9.0,>=7.2
 pytest-runner
 pytest-cov
 codecov
+flake8>=2.1.0
+nbval
+scipy
+
+[tests:python_version >= "3.8"]
+pooch
