@@ -7,8 +7,8 @@ from examples.seismic import demo_model
 from examples.seismic.acoustic import acoustic_setup
 from examples.seismic.tti import tti_setup
 from examples.seismic.viscoacoustic import viscoacoustic_setup
-from examples.seismic.stiffness import iso_elastic_setup
 from examples.seismic.stiffness import generic_elastic_setup
+from examples.seismic.stiffness import iso_elastic_setup
 from examples.seismic.vector_reflectivity import vector_reflectivity_setup
 
 presets = {
@@ -93,6 +93,10 @@ class TestAdjoint:
         ('layers-elastic', (20, 25), None, 8, 1, generic_elastic_setup),
         ('layers-elastic', (20, 25), None, 12, 1, generic_elastic_setup),
         # 3D elastic tests with varying space orders
+        ('layers-elastic', (20, 25, 20), None, 2, 1, generic_elastic_setup),
+        ('layers-elastic', (20, 25, 20), None, 4, 1, generic_elastic_setup),
+        ('layers-elastic', (20, 25, 20), None, 8, 1, generic_elastic_setup),
+        ('layers-elastic', (20, 25, 20), None, 12, 1, generic_elastic_setup),
         ('layers-elastic', (20, 25, 20), None, 2, 1, iso_elastic_setup),
         ('layers-elastic', (20, 25, 20), None, 4, 1, iso_elastic_setup),
         ('layers-elastic', (20, 25, 20), None, 8, 1, iso_elastic_setup),
@@ -113,10 +117,7 @@ class TestAdjoint:
         ('layers', (60, 70, 80), 'OT2', 8, 2, vector_reflectivity_setup),
         ('layers', (60, 70, 80), 'OT2', 6, 2, vector_reflectivity_setup),
         ('layers', (60, 70, 80), 'OT2', 4, 2, vector_reflectivity_setup),
-        ('layers-elastic', (20, 25, 20), None, 2, 1, generic_elastic_setup),
-        ('layers-elastic', (20, 25, 20), None, 4, 1, generic_elastic_setup),
-        ('layers-elastic', (20, 25, 20), None, 8, 1, generic_elastic_setup),
-        ('layers-elastic', (20, 25, 20), None, 12, 1, generic_elastic_setup),
+        # ('layers', (60, 70, 80), 'OT4', 2, 2, vector_reflectivity_setup),
     ])
     def test_adjoint_F(self, mkey, shape, kernel, space_order, time_order, setup_func):
         """
